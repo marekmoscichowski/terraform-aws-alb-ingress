@@ -3,6 +3,11 @@ output "target_group_name" {
   value       = join("", data.aws_lb_target_group.default.*.name)
 }
 
+output "code_deploy_group_name" {
+  description = "ALB Target Group name"
+  value       = aws_lb_target_group.code_deploy.name
+}
+
 output "target_group_arn" {
   description = "ALB Target Group ARN"
   value       = join("", data.aws_lb_target_group.default.*.arn)
