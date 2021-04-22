@@ -5,7 +5,7 @@ output "target_group_name" {
 
 output "code_deploy_group_name" {
   description = "ALB Target Group name"
-  value       = aws_lb_target_group.code_deploy.name
+  value       = join("", aws_lb_target_group.code_deploy.*.name)
 }
 
 output "target_group_arn" {
