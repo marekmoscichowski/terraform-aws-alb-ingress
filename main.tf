@@ -50,7 +50,7 @@ resource "aws_lb_target_group" "default" {
 resource "aws_lb_target_group" "code_deploy" {
   count = module.this.enabled ? 1 : 0
 
-  name        = module.this.id
+  name        = "${module.this.id}-code-deploy"
   port        = var.port
   protocol    = var.protocol
   slow_start  = var.slow_start
