@@ -1,5 +1,6 @@
 locals {
   target_group_arn = var.default_target_group_enabled ? join("", aws_lb_target_group.default.*.arn) : var.target_group_arn
+  code_deploy_group_arn = join("", aws_lb_target_group.code_deploy.*.arn)
 }
 
 data "aws_lb_target_group" "default" {
@@ -10,6 +11,44 @@ data "aws_lb_target_group" "default" {
 
 resource "aws_lb_target_group" "default" {
   count = module.this.enabled && var.default_target_group_enabled ? 1 : 0
+
+  name        = module.this.id
+  port        = var.port
+  protocol    = var.protocol
+  slow_start  = var.slow_start
+  tags        = var.tags
+  target_type = var.target_type
+  vpc_id      = var.vpc_id
+
+  deregistration_delay = var.deregistration_delay
+
+  load_balancing_algorithm_type = var.load_balancing_algorithm_type
+
+  stickiness {
+    type            = var.stickiness_type
+    cookie_duration = var.stickiness_cookie_duration
+    enabled         = var.stickiness_enabled
+  }
+
+  health_check {
+    enabled             = var.health_check_enabled
+    path                = var.health_check_path
+    port                = coalesce(var.health_check_port, var.port)
+    protocol            = coalesce(var.health_check_protocol, var.protocol)
+    timeout             = var.health_check_timeout
+    healthy_threshold   = var.health_check_healthy_threshold
+    unhealthy_threshold = var.health_check_unhealthy_threshold
+    interval            = var.health_check_interval
+    matcher             = var.health_check_matcher
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_lb_target_group" "code_deploy" {
+  count = module.this.enabled ? 1 : 0
 
   name        = module.this.id
   port        = var.port
@@ -174,8 +213,18 @@ resource "aws_lb_listener_rule" "unauthenticated_hosts" {
   priority     = var.unauthenticated_priority > 0 ? var.unauthenticated_priority + count.index : null
 
   action {
-    type             = "forward"
-    target_group_arn = local.target_group_arn
+    type = "forward"
+    forward {
+      target_group {
+        arn    = local.target_group_arn
+        weight = 100
+      }
+
+      target_group {
+        arn    = local.code_deploy_group_arn
+        weight = 0
+      }
+    }
   }
 
   condition {
