@@ -9,7 +9,7 @@ output "target_group_arn" {
 }
 
 output "code_deploy_group_arn" {
-  description = "ALB Target Group ARN"
+  description = "ALB second Target Group ARN for Code deploy"
   value       = local.code_deploy_group_arn
 }
 
